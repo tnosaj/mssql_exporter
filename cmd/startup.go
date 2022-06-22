@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"flag"
@@ -27,6 +27,28 @@ func evaluateInputs() (internal.Settings, error) {
 	flag.Parse()
 
 	setupLogger(s.Debug)
+
+	var err error
+	s.DBConnectionInfo.User, err = getEnvVar("DBUSER")
+	if err != nil {
+		return internal.Settings{}, err
+	}
+	s.DBConnectionInfo.Password, err = getEnvVar("DBPASSWORD")
+	if err != nil {
+		return internal.Settings{}, err
+	}
+	s.DBConnectionInfo.HostName, err = getEnvVar("DBHOSTNAME")
+	if err != nil {
+		return internal.Settings{}, err
+	}
+	s.DBConnectionInfo.DBName, err = getEnvVar("DBNAME")
+	if err != nil {
+		return internal.Settings{}, err
+	}
+	s.DBConnectionInfo.Port, err = getEnvVar("DBPORT")
+	if err != nil {
+		return internal.Settings{}, err
+	}
 
 	return s, nil
 }

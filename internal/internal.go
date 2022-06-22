@@ -6,4 +6,14 @@ type Settings struct {
 	Timeout int
 
 	MetricsPath string
+
+	DBConnectionInfo DBConnectionInfo
+}
+
+type DBConnectionInfo struct {
+	User     string
+	Password string
+	HostName string
+	DBName   string
+	Port     string
 }

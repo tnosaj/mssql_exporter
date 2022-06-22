@@ -1,8 +1,7 @@
-package cmd
+package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,13 +10,10 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-)
-
-var (
-	listenAddress = flag.String("web.listen-address", ":9888", "Address to listen on for web interface.")
-	metricPath    = flag.String("web.metrics-path", "/metrics", "Path under which to expose metrics.")
+	"github.com/tnosaj/mssql_exporter/internal"
 )
 
 func main() {
@@ -28,22 +24,9 @@ func main() {
 		log.Fatalf("could not evaluate inputs: %q", err)
 	}
 
-	router := mux.NewRouter()
-	router.Handle("/metrics", promhttp.Handler())
-	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "OK")
-	})
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`
-            <html>
-            <head><title>Volume Exporter Metrics</title></head>
-            <body>
-            <h1>ConfigMap Reload</h1>
-            <p><a href='` + s.MetricsPath + `'>Metrics</a></p>
-            </body>
-            </html>
-        `))
-	})
+	collector := internal.NewCollector(s.DBConnectionInfo)
+
+	prometheus.MustRegister(collector)
 
 	srv := &http.Server{
 		Addr: fmt.Sprintf("0.0.0.0:%s", s.Port),
@@ -51,7 +34,7 @@ func main() {
 		WriteTimeout: time.Second * time.Duration(s.Timeout),
 		ReadTimeout:  time.Second * time.Duration(s.Timeout),
 		IdleTimeout:  time.Second * time.Duration(s.Timeout),
-		Handler:      router,
+		Handler:      createRoutes(s.MetricsPath),
 	}
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
@@ -79,4 +62,24 @@ func main() {
 	// to finalize based on context cancellation.
 	log.Println("shutting down")
 	os.Exit(0)
+}
+
+func createRoutes(metricsPath string) *mux.Router {
+	router := mux.NewRouter()
+	router.Handle("/metrics", promhttp.Handler())
+	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "OK")
+	})
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`
+            <html>
+            <head><title>MSSQL Exporter Metrics</title></head>
+            <body>
+            <h1>Metrics url: </h1>
+            <p><a href='` + metricsPath + `'>Metrics</a></p>
+            </body>
+            </html>
+        `))
+	})
+	return router
 }
