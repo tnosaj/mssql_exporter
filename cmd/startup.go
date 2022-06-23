@@ -11,8 +11,6 @@ import (
 
 func evaluateInputs() (internal.Settings, error) {
 	var s internal.Settings
-	//	var err error
-
 	flag.BoolVar(&s.Debug, "v", false, "Enable verbose debugging output")
 	flag.StringVar(&s.Port, "p", "8080", "Starts server on this port")
 	flag.IntVar(&s.Timeout, "t", 1, "Timeout in seconds for a backend answer")

@@ -26,6 +26,11 @@ func (c collector) checkConnection() bool {
 	return true
 }
 
-func (c collector) performQuery() {
-
+func performQuery(query string, conn *sql.DB) *sql.Rows {
+	rows, err := conn.Query(query)
+	if err != nil {
+		logrus.Errorf("query %s failed with error: %s", query, err)
+		return &sql.Rows{}
+	}
+	return rows
 }

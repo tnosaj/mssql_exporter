@@ -44,5 +44,8 @@ func (c collector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(c.up.Desc(), prometheus.GaugeValue, 1)
+	for _, metricsReturned := range returnMetrics(c.databaseConnection) {
+		ch <- metricsReturned
+	}
 	return
 }
