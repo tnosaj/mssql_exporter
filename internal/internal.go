@@ -5,7 +5,8 @@ type Settings struct {
 	Port    string
 	Timeout int
 
-	MetricsPath string
+	MetricsPath    string
+	EnabledMetrics []string
 
 	DBConnectionInfo DBConnectionInfo
 }

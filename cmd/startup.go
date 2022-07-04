@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/tnosaj/mssql_exporter/internal"
@@ -11,8 +12,10 @@ import (
 
 func evaluateInputs() (internal.Settings, error) {
 	var s internal.Settings
+	var includeMetrics string
 	flag.BoolVar(&s.Debug, "v", false, "Enable verbose debugging output")
 	flag.StringVar(&s.Port, "p", "8080", "Starts server on this port")
+	flag.StringVar(&includeMetrics, "i", "exec,filespace,index,memory,performance,schedulers,tasks,waits", "Coma seperated list of metrics to gather")
 	flag.IntVar(&s.Timeout, "t", 1, "Timeout in seconds for a backend answer")
 
 	flag.StringVar(&s.MetricsPath, "u", "/metrics", "Url for the user service")
@@ -25,6 +28,8 @@ func evaluateInputs() (internal.Settings, error) {
 	flag.Parse()
 
 	setupLogger(s.Debug)
+
+	s.EnabledMetrics = strings.Split(includeMetrics, ",")
 
 	var err error
 	s.DBConnectionInfo.User, err = getEnvVar("DBUSER")
@@ -52,7 +57,7 @@ func evaluateInputs() (internal.Settings, error) {
 }
 
 func setupLogger(debug bool) {
-	logrus.SetReportCaller(false)
+	logrus.SetReportCaller(true)
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})

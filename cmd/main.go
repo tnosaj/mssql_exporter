@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("could not evaluate inputs: %q", err)
 	}
 
-	collector := internal.NewCollector(s.DBConnectionInfo)
+	collector := internal.NewCollector(s.DBConnectionInfo, s.EnabledMetrics)
 
 	prometheus.MustRegister(collector)
 

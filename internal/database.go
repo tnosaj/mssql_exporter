@@ -13,11 +13,16 @@ func createConnection(connectionString string) *sql.DB {
 	if connectionError != nil {
 		logrus.Errorf("error opening database: %v", connectionError)
 	}
+	err := dbConn.Ping()
+	if err != nil {
+		logrus.Error("Initial connection Ping failed")
+	}
+	logrus.Debug("Initial connection Ping succeeded")
 	return dbConn
 }
 
 func (c collector) checkConnection() bool {
-	err := c.databaseConnection.PingContext(c.ctx)
+	err := c.databaseConnection.Ping()
 	if err != nil {
 		logrus.Debug("Connection Ping failed")
 		return false
