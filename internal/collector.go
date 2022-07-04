@@ -53,5 +53,4 @@ func (c collector) Collect(ch chan<- prometheus.Metric) {
 	for _, metricsReturned := range returnMetrics(c.databaseConnection, c.dbname, c.dbhost, c.enabledMetrics) {
 		ch <- metricsReturned
 	}
-	return
 }

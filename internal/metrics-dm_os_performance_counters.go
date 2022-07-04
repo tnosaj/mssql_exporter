@@ -14,7 +14,7 @@ func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
 	rows := performQuery(`SELECT 
 	object_name, 
 	counter_name, 
-	CASE WHEN instance_name != "" THEN instance_name ELSE "empty" END as instance_name,
+	CASE WHEN instance_name != '' THEN instance_name ELSE 'empty' END as instance_name,
 	cntr_value
 	FROM sys.dm_os_performance_counters
 	WHERE 

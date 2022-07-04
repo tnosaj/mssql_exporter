@@ -15,7 +15,7 @@ func evaluateInputs() (internal.Settings, error) {
 	var includeMetrics string
 	flag.BoolVar(&s.Debug, "v", false, "Enable verbose debugging output")
 	flag.StringVar(&s.Port, "p", "8080", "Starts server on this port")
-	flag.StringVar(&includeMetrics, "i", "exec,filespace,index,memory,performance,schedulers,tasks,waits", "Coma seperated list of metrics to gather")
+	flag.StringVar(&includeMetrics, "i", "exec,filespace,index,memory,schedulers,tasks,waits", "Comma seperated list of metrics to gather. Possible values are [exec,filespace,index,memory,performance,schedulers,tasks,waits]")
 	flag.IntVar(&s.Timeout, "t", 1, "Timeout in seconds for a backend answer")
 
 	flag.StringVar(&s.MetricsPath, "u", "/metrics", "Url for the user service")
@@ -57,7 +57,7 @@ func evaluateInputs() (internal.Settings, error) {
 }
 
 func setupLogger(debug bool) {
-	logrus.SetReportCaller(true)
+	logrus.SetReportCaller(false)
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})
