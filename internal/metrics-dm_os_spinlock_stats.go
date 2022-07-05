@@ -17,7 +17,8 @@ func getSpinLockStats(conn *sql.DB) []prometheus.Metric {
 		spins_per_collision,
 		sleep_time,
 		backoffs
-	  FROM sys.dm_os_spinlock_stats;`,
+	  FROM sys.dm_os_spinlock_stats
+	  WHERE collisions > 0;`,
 		conn,
 	)
 

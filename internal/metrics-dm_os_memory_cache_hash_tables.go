@@ -26,8 +26,7 @@ func getMemoryCacheHashtablesStats(conn *sql.DB) []prometheus.Metric {
 	sum(buckets_avg_scan_hit_length),     
 	sum(buckets_avg_scan_miss_length)     
 	FROM sys.dm_os_memory_cache_hash_tables 
-	GROUP BY name, type, table_level;
-	`,
+	GROUP BY name, type, table_level;`,
 		conn,
 	)
 

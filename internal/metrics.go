@@ -14,7 +14,6 @@ func returnMetrics(db *sql.DB, database string, host string, enabledMetrics []st
 	dbname = database
 	dbhost = host
 	var metrics []prometheus.Metric
-
 	for _, enabledMetric := range enabledMetrics {
 		switch enabledMetric {
 		case "exec":
@@ -32,7 +31,7 @@ func returnMetrics(db *sql.DB, database string, host string, enabledMetrics []st
 			metrics = append(metrics, checkToAppend(getPerformanceCountersStats(db))...)
 			metrics = append(metrics, checkToAppend(getLatchStats(db))...)
 			metrics = append(metrics, checkToAppend(getSpinLockStats(db))...)
-			metrics = append(metrics, checkToAppend(getBufferDescriptorsStats(db))...)
+			//metrics = append(metrics, checkToAppend(getBufferDescriptorsStats(db))...)
 		case "schedulers":
 			metrics = append(metrics, checkToAppend(getSchedulersStats(db))...)
 		case "tasks":
@@ -53,7 +52,8 @@ func returnMetric(name, desc, labelDesc, label string, value float64) prometheus
 		labelDescSanatized = append(labelDescSanatized, []string{sanitizeStringForLabel(labelDesc)}...)
 		labelSanatized = append(labelSanatized, []string{sanitizeStringForLabel(label)}...)
 	}
-	return prometheus.MustNewConstMetric(
+	logrus.Debugf("labels: %v, desc: %v, value: %f", labelSanatized, labelDescSanatized, value)
+	m, err := prometheus.NewConstMetric(
 		prometheus.NewDesc(
 			name,
 			desc,
@@ -62,6 +62,11 @@ func returnMetric(name, desc, labelDesc, label string, value float64) prometheus
 		value,
 		labelSanatized...,
 	)
+	if err != nil {
+		logrus.Errorf("creating metric failed: %s", err)
+		return nil
+	}
+	return m
 }
 
 func bool2int(b bool) int {
@@ -72,8 +77,21 @@ func bool2int(b bool) int {
 }
 
 func sanitizeStringForLabel(s string) string {
+	s = strings.TrimSpace(s)
 	s = strings.Replace(s, " ", "_", -1)
-	s = strings.Replace(s, "%", "percent", -1)
+	s = strings.Replace(s, "%", "pct", -1)
+	s = strings.Replace(s, "/", "_per_", -1)
+	s = strings.Replace(s, ".", "", -1)
+	s = strings.Replace(s, ">=", "gte_", -1)
+	s = strings.Replace(s, "<=", "lte_", -1)
+	s = strings.Replace(s, ">", "gt_", -1)
+	s = strings.Replace(s, "<", "lt_", -1)
+	s = strings.Replace(s, "&", "_and_", -1)
+	s = strings.Replace(s, "(", "", -1)
+	s = strings.Replace(s, ")", "", -1)
+	s = strings.Replace(s, ":", "_", -1)
+	s = strings.Replace(s, "$", "_", -1)
+	s = strings.Replace(s, ".blob.core.windows.net", "", -1)
 	return strings.ToLower(s)
 }
 

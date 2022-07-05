@@ -72,6 +72,7 @@ func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
+	logrus.Debugf("Finished")
 	err := rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
