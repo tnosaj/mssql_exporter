@@ -8,7 +8,7 @@ import (
 )
 
 func getWaitStatsStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT
 	      wait_type,
@@ -23,26 +23,26 @@ func getWaitStatsStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
-
+	var wait_type string
+	var waiting_tasks_count int64
+	var wait_time_ms int64
+	var max_wait_time_ms int64
+	var signal_wait_time_ms int64
 	for rows.Next() {
-		var wait_type string
-		var waiting_tasks_count int64
-		var wait_time_ms int64
-		var max_wait_time_ms int64
-		var signal_wait_time_ms int64
 
-		err := rows.Scan(
+		if err := rows.Scan(
 			&wait_type,
 			&waiting_tasks_count,
 			&wait_time_ms,
 			&max_wait_time_ms,
 			&signal_wait_time_ms,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
+
 		metrics = append(metrics, returnMetric(
 			"sql_wait_stats_waiting_tasks_count",
 			"Current value of waiting_tasks_count in dm_os_wait_stats by wait_type",

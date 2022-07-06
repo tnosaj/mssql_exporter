@@ -9,7 +9,7 @@ import (
 )
 
 func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT 
 	object_name, 
@@ -27,7 +27,7 @@ func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
 
 	/*
@@ -43,20 +43,19 @@ func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
 	   	272696320 - PERF_COUNTER_COUNTER (Average number of operations completed during each second of the sample interval)
 	   	272696576 - PERF_COUNTER_BULK_COUNT (The value is obtained by taking two samples of the PERF_COUNTER_BULK_COUNT value.)
 	*/
+	var object_name, counter_name, instance_name string
+	var cntr_value int64
 
 	for rows.Next() {
 
-		var object_name, counter_name, instance_name string
-		var cntr_value int64
-
-		err := rows.Scan(
+		if err := rows.Scan(
 			&object_name,
 			&counter_name,
 			&instance_name,
 			&cntr_value,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		labelName := fmt.Sprintf(

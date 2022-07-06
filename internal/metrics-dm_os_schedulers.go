@@ -9,7 +9,7 @@ import (
 )
 
 func getSchedulersStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT
 		scheduler_id,
@@ -38,33 +38,32 @@ func getSchedulersStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
+	var scheduler_id int64
+	var is_idle bool
+	var preemptive_switches_count int64
+	var context_switches_count int64
+	var idle_switches_count int64
+	var current_tasks_count int64
+	var runnable_tasks_count int64
+	var current_workers_count int64
+	var active_workers_count int64
+	var work_queue_count int64
+	var pending_disk_io_count int64
+	var queued_disk_io_count int64
+	var load_factor int64
+	var yield_count int64
+	var last_timer_activity int64
+	var failed_to_create_worker bool
+	var total_cpu_usage_ms int64
+	var total_cpu_idle_capped_ms int64
+	var total_scheduler_delay_ms int64
+	var ideal_workers_limit int64
 
 	for rows.Next() {
 
-		var scheduler_id int64
-		var is_idle bool
-		var preemptive_switches_count int64
-		var context_switches_count int64
-		var idle_switches_count int64
-		var current_tasks_count int64
-		var runnable_tasks_count int64
-		var current_workers_count int64
-		var active_workers_count int64
-		var work_queue_count int64
-		var pending_disk_io_count int64
-		var queued_disk_io_count int64
-		var load_factor int64
-		var yield_count int64
-		var last_timer_activity int64
-		var failed_to_create_worker bool
-		var total_cpu_usage_ms int64
-		var total_cpu_idle_capped_ms int64
-		var total_scheduler_delay_ms int64
-		var ideal_workers_limit int64
-
-		err := rows.Scan(
+		if err := rows.Scan(
 			&scheduler_id,
 			&is_idle,
 			&preemptive_switches_count,
@@ -85,9 +84,9 @@ func getSchedulersStats(conn *sql.DB) []prometheus.Metric {
 			&total_cpu_idle_capped_ms,
 			&total_scheduler_delay_ms,
 			&ideal_workers_limit,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 		schedulerIdName := strconv.FormatInt(scheduler_id, 10)
 

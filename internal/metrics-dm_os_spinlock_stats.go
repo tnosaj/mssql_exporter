@@ -8,7 +8,7 @@ import (
 )
 
 func getSpinLockStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT
 		name,
@@ -23,28 +23,28 @@ func getSpinLockStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
+
+	var name string
+	var collisions int64
+	var spins int64
+	var spins_per_collision float32
+	var sleep_time int64
+	var backoffs int64
 
 	for rows.Next() {
 
-		var name string
-		var collisions int64
-		var spins int64
-		var spins_per_collision float32
-		var sleep_time int64
-		var backoffs int64
-
-		err := rows.Scan(
+		if err := rows.Scan(
 			&name,
 			&collisions,
 			&spins,
 			&spins_per_collision,
 			&sleep_time,
 			&backoffs,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		metrics = append(metrics, returnMetric(

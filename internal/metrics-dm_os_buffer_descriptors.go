@@ -8,7 +8,7 @@ import (
 )
 
 func getBufferDescriptorsStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT COUNT(*) AS cached_pages_count  
 	FROM sys.dm_os_buffer_descriptors  
@@ -17,18 +17,16 @@ func getBufferDescriptorsStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
-
+	var cached_pages_count int64
 	for rows.Next() {
 
-		var cached_pages_count int64
-
-		err := rows.Scan(
+		if err := rows.Scan(
 			&cached_pages_count,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		metrics = append(metrics, returnMetric(

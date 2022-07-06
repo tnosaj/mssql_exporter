@@ -9,7 +9,7 @@ import (
 )
 
 func getIndexUsageStatsStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT
 	database_id,
@@ -28,23 +28,23 @@ func getIndexUsageStatsStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
 
+	var database_id int
+	var object_id int
+	var index_id int
+	var user_seeks int64
+	var user_scans int64
+	var user_lookups int64
+	var user_updates int64
+	var system_seeks int64
+	var system_scans int64
+	var system_lookups int64
+	var system_updates int64
 	for rows.Next() {
-		var database_id int
-		var object_id int
-		var index_id int
-		var user_seeks int64
-		var user_scans int64
-		var user_lookups int64
-		var user_updates int64
-		var system_seeks int64
-		var system_scans int64
-		var system_lookups int64
-		var system_updates int64
 
-		err := rows.Scan(
+		if err := rows.Scan(
 			&database_id,
 			&object_id,
 			&index_id,
@@ -56,9 +56,9 @@ func getIndexUsageStatsStats(conn *sql.DB) []prometheus.Metric {
 			&system_scans,
 			&system_lookups,
 			&system_updates,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		metrics = append(metrics, returnMetric(

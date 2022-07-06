@@ -8,7 +8,7 @@ import (
 )
 
 func getTasksStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT
 		task_state, 
@@ -21,26 +21,24 @@ func getTasksStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
-
+	var task_state string
+	var sum_context_switches int
+	var sum_io_operation_count int
+	var sum_io_bytes_count int64
+	var sum_io_bytes_average int
 	for rows.Next() {
 
-		var task_state string
-		var sum_context_switches int
-		var sum_io_operation_count int
-		var sum_io_bytes_count int64
-		var sum_io_bytes_average int
-
-		err := rows.Scan(
+		if err := rows.Scan(
 			&task_state,
 			&sum_context_switches,
 			&sum_io_operation_count,
 			&sum_io_bytes_count,
 			&sum_io_bytes_average,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		metrics = append(metrics, returnMetric(

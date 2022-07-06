@@ -8,7 +8,7 @@ import (
 )
 
 func getFileSpaceUsageStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT
 	SUM(total_page_count *1.0/128) AS Total_space_MB ,
@@ -21,26 +21,27 @@ func getFileSpaceUsageStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
+	var total_space_mb float32
+	var unallocated_space_mb float32
+	var user_obj_allocated_space_mb float32
+	var internal_obj_allocated_space_mb float32
+	var other_obj_allocated_space_mb float32
 
 	for rows.Next() {
-		var total_space_mb float32
-		var unallocated_space_mb float32
-		var user_obj_allocated_space_mb float32
-		var internal_obj_allocated_space_mb float32
-		var other_obj_allocated_space_mb float32
 
-		err := rows.Scan(
+		if err := rows.Scan(
 			&total_space_mb,
 			&unallocated_space_mb,
 			&user_obj_allocated_space_mb,
 			&internal_obj_allocated_space_mb,
 			&other_obj_allocated_space_mb,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
+
 		metrics = append(metrics, returnMetric(
 			"sql_file_space_usage_total_space_mb",
 			"Current value of system total_space_mb in dm_os_file_space_usage",

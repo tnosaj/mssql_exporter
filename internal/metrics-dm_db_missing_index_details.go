@@ -9,7 +9,7 @@ import (
 )
 
 func getMissingIndexDetailsStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`select 
 	  database_id, 
@@ -21,21 +21,20 @@ func getMissingIndexDetailsStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
-
+	var database_id int
+	var object_id int
+	var count int
 	for rows.Next() {
-		var database_id int
-		var object_id int
-		var count int
 
-		err := rows.Scan(
+		if err := rows.Scan(
 			&database_id,
 			&object_id,
 			&count,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		metrics = append(metrics, returnMetric(

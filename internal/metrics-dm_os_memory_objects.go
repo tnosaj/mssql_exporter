@@ -8,7 +8,7 @@ import (
 )
 
 func getMemoryObjectsStats(conn *sql.DB) []prometheus.Metric {
-	var metrics []prometheus.Metric
+	metrics := []prometheus.Metric{}
 
 	rows, err := performQuery(`SELECT type, SUM(pages_in_bytes)   
 	FROM sys.dm_os_memory_objects  
@@ -17,20 +17,19 @@ func getMemoryObjectsStats(conn *sql.DB) []prometheus.Metric {
 	)
 	if err != nil {
 		logrus.Errorf("Error in query execution, skipping metrics")
-		return []prometheus.Metric{}
+		return metrics
 	}
 
+	var ttype string
+	var sum_pages_in_bytes int64
 	for rows.Next() {
 
-		var ttype string
-		var sum_pages_in_bytes int64
-
-		err := rows.Scan(
+		if err := rows.Scan(
 			&ttype,
 			&sum_pages_in_bytes,
-		)
-		if err != nil {
+		); err != nil {
 			logrus.Errorf("Failed to scan with error: %s", err)
+			continue
 		}
 
 		metrics = append(metrics, returnMetric(
