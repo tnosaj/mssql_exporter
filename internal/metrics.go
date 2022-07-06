@@ -10,36 +10,62 @@ import (
 
 var dbname, dbhost string
 
-func returnMetrics(db *sql.DB, database string, host string, enabledMetrics []string) []prometheus.Metric {
+func collectMetrics(db *sql.DB, database string, host string, enabledCollectors []string) []prometheus.Metric {
 	dbname = database
 	dbhost = host
+
+	type metricsCollector = struct {
+		name string
+		f    func(*sql.DB) []prometheus.Metric
+	}
+
+	collectors := make([]metricsCollector, 0)
+
 	var metrics []prometheus.Metric
-	for _, enabledMetric := range enabledMetrics {
-		switch enabledMetric {
+	for _, collector := range enabledCollectors {
+		switch collector {
 		case "exec":
-			metrics = append(metrics, checkToAppend(getExecRequestStatusStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getExecRequestStatusStats})
+
 		case "filespace":
-			metrics = append(metrics, checkToAppend(getFileSpaceUsageStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getFileSpaceUsageStats})
+
 		case "index":
-			metrics = append(metrics, checkToAppend(getIndexUsageStatsStats(db))...)
-			metrics = append(metrics, checkToAppend(getMissingIndexDetailsStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getIndexUsageStatsStats},
+				metricsCollector{collector, getMissingIndexDetailsStats})
+
 		case "memory":
-			metrics = append(metrics, checkToAppend(getMemoryCacheHashtablesStats(db))...)
-			metrics = append(metrics, checkToAppend(getMemoryClerksStats(db))...)
-			metrics = append(metrics, checkToAppend(getMemoryObjectsStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getMemoryCacheHashtablesStats},
+				metricsCollector{collector, getMemoryClerksStats},
+				metricsCollector{collector, getMemoryObjectsStats})
+
 		case "performance":
-			metrics = append(metrics, checkToAppend(getPerformanceCountersStats(db))...)
-			//metrics = append(metrics, checkToAppend(getLatchStats(db))...)
-			//metrics = append(metrics, checkToAppend(getSpinLockStats(db))...)
-			//metrics = append(metrics, checkToAppend(getBufferDescriptorsStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getPerformanceCountersStats})
+
 		case "schedulers":
-			metrics = append(metrics, checkToAppend(getSchedulersStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getSchedulersStats})
+
 		case "tasks":
-			metrics = append(metrics, checkToAppend(getTasksStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getTasksStats})
+
 		case "waits":
-			metrics = append(metrics, checkToAppend(getWaitStatsStats(db))...)
+			collectors = append(collectors, metricsCollector{collector, getWaitStatsStats})
+
+		default:
+			logrus.Error("invalid collector %s, skipping it", collector)
 		}
 	}
+
+	for _, collector := range collectors {
+		collectedMetrics := collector.f(db)
+		if len(collectedMetrics) == 0 {
+			logrus.Warnf("empty metrics list for collector %s", collector.name)
+			continue
+		}
+
+		metrics = append(metrics, collectedMetrics...)
+	}
+
 	logrus.Infof("Retrieved %d metrics", len(metrics))
 	return metrics
 }
@@ -107,11 +133,4 @@ func sanitizeStringForLabel(s string) string {
 	//    return result.String()
 
 	return strings.ToLower(result.String())
-}
-
-func checkToAppend(m []prometheus.Metric) []prometheus.Metric {
-	if len(m) > 0 {
-		return m
-	}
-	return []prometheus.Metric{}
 }

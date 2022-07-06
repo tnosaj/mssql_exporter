@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 type collector struct {
@@ -19,16 +21,20 @@ type collector struct {
 
 func NewCollector(dbConnectionInfo DBConnectionInfo, enabledMetrics []string) *collector {
 
+	conn, err := connect(fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
+		dbConnectionInfo.HostName,
+		dbConnectionInfo.User,
+		dbConnectionInfo.Password,
+		dbConnectionInfo.Port,
+		dbConnectionInfo.DBName),
+	)
+	if err != nil {
+		logrus.Fatalf("Failed to connect: %s", err)
+	}
+
 	return &collector{
-		databaseConnection: createConnection(
-			fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
-				dbConnectionInfo.HostName,
-				dbConnectionInfo.User,
-				dbConnectionInfo.Password,
-				dbConnectionInfo.Port,
-				dbConnectionInfo.DBName),
-		),
-		ctx: context.Background(),
+		databaseConnection: conn,
+		ctx:                context.Background(),
 		up: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Name: "up",
@@ -45,17 +51,21 @@ func (c collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c collector) Collect(ch chan<- prometheus.Metric) {
-	if c.checkConnection() == false {
-		ch <- prometheus.MustNewConstMetric(c.up.Desc(), prometheus.GaugeValue, 0)
-		return
+	c.up.Set(0)
+
+	if c.isConnected() {
+		c.up.Set(1)
+
+		t := time.Now()
+		metrics := collectMetrics(c.databaseConnection, c.dbname, c.dbhost, c.enabledMetrics)
+		logrus.Debugf("Collected %d metrics after %s", len(metrics), time.Since(t))
+
+		for _, metric := range metrics {
+			tm := time.Now()
+			ch <- metric
+			logrus.Debugf("Added metric %s to the registry after %s", metric.Desc().String(), time.Since(tm))
+		}
+
 	}
-	ch <- prometheus.MustNewConstMetric(c.up.Desc(), prometheus.GaugeValue, 1)
-	for _, metricsReturned := range returnMetrics(
-		c.databaseConnection,
-		c.dbname,
-		c.dbhost,
-		c.enabledMetrics,
-	) {
-		ch <- metricsReturned
-	}
+	ch <- c.up
 }
