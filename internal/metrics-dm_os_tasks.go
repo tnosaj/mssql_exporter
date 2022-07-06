@@ -10,7 +10,7 @@ import (
 func getTasksStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT
+	rows, err := performQuery(`SELECT
 		task_state, 
 		sum(context_switches_count) as sum_context_switches,
 		sum(pending_io_count) as sum_io_operation_count,
@@ -19,6 +19,10 @@ func getTasksStats(conn *sql.DB) []prometheus.Metric {
 		FROM sys.dm_os_tasks where task_state !='DONE' group by task_state;`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 
@@ -72,7 +76,7 @@ func getTasksStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

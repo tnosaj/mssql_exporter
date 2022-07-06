@@ -10,7 +10,7 @@ import (
 func getMemoryClerksStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT
+	rows, err := performQuery(`SELECT
 	[type]
 	,SUM(pages_kb)					   AS sum_pages_kb
 	,SUM(virtual_memory_reserved_kb)   AS sum_virtual_memory_reserved_kb
@@ -21,6 +21,10 @@ func getMemoryClerksStats(conn *sql.DB) []prometheus.Metric {
     GROUP BY [type];`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 
@@ -84,7 +88,7 @@ func getMemoryClerksStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

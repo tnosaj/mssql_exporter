@@ -11,7 +11,7 @@ import (
 func getMemoryCacheHashtablesStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT    
+	rows, err := performQuery(`SELECT    
 	name, 
 	type,     
 	table_level,    
@@ -29,6 +29,10 @@ func getMemoryCacheHashtablesStats(conn *sql.DB) []prometheus.Metric {
 	GROUP BY name, type, table_level;`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 		var name string
@@ -145,7 +149,7 @@ func getMemoryCacheHashtablesStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

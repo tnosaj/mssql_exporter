@@ -10,7 +10,7 @@ import (
 func getFileSpaceUsageStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT
+	rows, err := performQuery(`SELECT
 	SUM(total_page_count *1.0/128) AS Total_space_MB ,
 	SUM(unallocated_extent_page_count*1.0/128) AS Unallocated_Space_MB,
 	SUM(user_object_reserved_page_count*1.0/128) AS User_Obj_Allocated_Space_MB,
@@ -19,6 +19,10 @@ func getFileSpaceUsageStats(conn *sql.DB) []prometheus.Metric {
 	FROM tempdb.sys.dm_db_file_space_usage;`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 		var total_space_mb float32
@@ -77,7 +81,7 @@ func getFileSpaceUsageStats(conn *sql.DB) []prometheus.Metric {
 			float64(other_obj_allocated_space_mb),
 		))
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

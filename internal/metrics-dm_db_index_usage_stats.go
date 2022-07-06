@@ -11,7 +11,7 @@ import (
 func getIndexUsageStatsStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT
+	rows, err := performQuery(`SELECT
 	database_id,
 	object_id,
 	index_id,
@@ -26,6 +26,10 @@ func getIndexUsageStatsStats(conn *sql.DB) []prometheus.Metric {
 	FROM sys.dm_db_index_usage_stats;`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 		var database_id int
@@ -122,7 +126,7 @@ func getIndexUsageStatsStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

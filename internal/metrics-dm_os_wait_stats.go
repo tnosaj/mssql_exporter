@@ -10,7 +10,7 @@ import (
 func getWaitStatsStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT
+	rows, err := performQuery(`SELECT
 	      wait_type,
 		  waiting_tasks_count,
 		  wait_time_ms,
@@ -21,6 +21,10 @@ func getWaitStatsStats(conn *sql.DB) []prometheus.Metric {
 		OR wait_type like 'PAGEIOLATCH_%';`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 		var wait_type string
@@ -71,7 +75,7 @@ func getWaitStatsStats(conn *sql.DB) []prometheus.Metric {
 			float64(signal_wait_time_ms),
 		))
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

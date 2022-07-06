@@ -10,10 +10,14 @@ import (
 func getExecRequestStatusStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(
+	rows, err := performQuery(
 		"SELECT [status], COUNT(*) AS cnt FROM sys.dm_exec_requests WHERE session_id > 50 GROUP BY [status];",
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 		var status string
@@ -30,7 +34,7 @@ func getExecRequestStatusStats(conn *sql.DB) []prometheus.Metric {
 			float64(count),
 		))
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}
@@ -40,10 +44,14 @@ func getExecRequestStatusStats(conn *sql.DB) []prometheus.Metric {
 func getExecRequestSuspendedStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(
+	rows, err := performQuery(
 		"SELECT wait_type, COUNT(*) AS cnt FROM sys.dm_exec_requests WHERE session_id > 50 AND status = 'suspended' GROUP BY wait_type;",
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 		var waitTypes string
@@ -60,7 +68,7 @@ func getExecRequestSuspendedStats(conn *sql.DB) []prometheus.Metric {
 			float64(count),
 		))
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

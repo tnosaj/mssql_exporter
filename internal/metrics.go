@@ -29,8 +29,8 @@ func returnMetrics(db *sql.DB, database string, host string, enabledMetrics []st
 			metrics = append(metrics, checkToAppend(getMemoryObjectsStats(db))...)
 		case "performance":
 			metrics = append(metrics, checkToAppend(getPerformanceCountersStats(db))...)
-			metrics = append(metrics, checkToAppend(getLatchStats(db))...)
-			metrics = append(metrics, checkToAppend(getSpinLockStats(db))...)
+			//metrics = append(metrics, checkToAppend(getLatchStats(db))...)
+			//metrics = append(metrics, checkToAppend(getSpinLockStats(db))...)
 			//metrics = append(metrics, checkToAppend(getBufferDescriptorsStats(db))...)
 		case "schedulers":
 			metrics = append(metrics, checkToAppend(getSchedulersStats(db))...)
@@ -91,8 +91,22 @@ func sanitizeStringForLabel(s string) string {
 	s = strings.Replace(s, ")", "", -1)
 	s = strings.Replace(s, ":", "_", -1)
 	s = strings.Replace(s, "$", "_", -1)
+	s = strings.Replace(s, ".", "", -1)
 	s = strings.Replace(s, ".blob.core.windows.net", "", -1)
-	return strings.ToLower(s)
+
+	var result strings.Builder
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+		if ('a' <= b && b <= 'z') ||
+			('A' <= b && b <= 'Z') ||
+			('0' <= b && b <= '9') ||
+			b == '_' {
+			result.WriteByte(b)
+		}
+	}
+	//    return result.String()
+
+	return strings.ToLower(result.String())
 }
 
 func checkToAppend(m []prometheus.Metric) []prometheus.Metric {

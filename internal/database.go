@@ -8,7 +8,7 @@ import (
 )
 
 func createConnection(connectionString string) *sql.DB {
-	logrus.Debug("Create new connection")
+	logrus.Info("Create new connection")
 	dbConn, connectionError := sql.Open("mssql", connectionString)
 	if connectionError != nil {
 		logrus.Errorf("error opening database: %v", connectionError)
@@ -17,7 +17,7 @@ func createConnection(connectionString string) *sql.DB {
 	if err != nil {
 		logrus.Error("Initial connection Ping failed")
 	}
-	logrus.Debug("Initial connection Ping succeeded")
+	logrus.Info("Initial connection Ping succeeded")
 	return dbConn
 }
 
@@ -31,11 +31,11 @@ func (c collector) checkConnection() bool {
 	return true
 }
 
-func performQuery(query string, conn *sql.DB) *sql.Rows {
+func performQuery(query string, conn *sql.DB) (*sql.Rows, error) {
 	rows, err := conn.Query(query)
 	if err != nil {
 		logrus.Errorf("query %s failed with error: %s", query, err)
-		return &sql.Rows{}
+		return &sql.Rows{}, err
 	}
-	return rows
+	return rows, nil
 }

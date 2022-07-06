@@ -11,7 +11,7 @@ import (
 func getSchedulersStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT
+	rows, err := performQuery(`SELECT
 		scheduler_id,
 		is_idle,
 		preemptive_switches_count,
@@ -36,6 +36,10 @@ func getSchedulersStats(conn *sql.DB) []prometheus.Metric {
 	  WHERE status = 'VISIBLE ONLINE';`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 
@@ -240,7 +244,7 @@ func getSchedulersStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

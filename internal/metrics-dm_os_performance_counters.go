@@ -11,23 +11,26 @@ import (
 func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`SELECT 
+	rows, err := performQuery(`SELECT 
 	object_name, 
 	counter_name, 
 	CASE WHEN instance_name != '' THEN instance_name ELSE 'empty' END as instance_name,
 	cntr_value
 	FROM sys.dm_os_performance_counters
-	WHERE 
+	WHERE
 	cntr_type = 65792 OR
 	cntr_type = 537003264 OR
 	cntr_type = 1073939712 OR
 	cntr_type = 1073874176 OR
-	cntr_type=272696576;`,
+	cntr_type = 272696576;`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	/*
-
 	    https://techcommunity.microsoft.com/t5/sql-server-support-blog/interpreting-the-counter-values-from-sys-dm-os-performance/ba-p/317824
 	   	https://troubleshootingsql.com/2011/03/03/what-does-cntr_type-mean/
 
@@ -73,7 +76,7 @@ func getPerformanceCountersStats(conn *sql.DB) []prometheus.Metric {
 
 	}
 	logrus.Debugf("Finished")
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}

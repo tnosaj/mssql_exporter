@@ -10,7 +10,7 @@ import (
 func getLatchStats(conn *sql.DB) []prometheus.Metric {
 	var metrics []prometheus.Metric
 
-	rows := performQuery(`select 
+	rows, err := performQuery(`select 
 	  latch_class,
 	  waiting_requests_count,
 	  wait_time_ms,
@@ -18,6 +18,10 @@ func getLatchStats(conn *sql.DB) []prometheus.Metric {
 	FROM sys.dm_os_latch_stats;`,
 		conn,
 	)
+	if err != nil {
+		logrus.Errorf("Error in query execution, skipping metrics")
+		return []prometheus.Metric{}
+	}
 
 	for rows.Next() {
 
@@ -61,7 +65,7 @@ func getLatchStats(conn *sql.DB) []prometheus.Metric {
 		))
 
 	}
-	err := rows.Err()
+	err = rows.Err()
 	if err != nil {
 		logrus.Errorf("Scan failed %s:", err)
 	}
