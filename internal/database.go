@@ -2,26 +2,27 @@ package internal
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/sirupsen/logrus"
 )
 
-func createConnection(connectionString string) *sql.DB {
+func connect(connectionString string) (*sql.DB, error) {
 	logrus.Info("Create new connection")
-	dbConn, connectionError := sql.Open("mssql", connectionString)
-	if connectionError != nil {
-		logrus.Errorf("error opening database: %v", connectionError)
-	}
-	err := dbConn.Ping()
+	dbConn, err := sql.Open("mssql", connectionString)
 	if err != nil {
-		logrus.Error("Initial connection Ping failed")
+		return nil, fmt.Errorf("error opening database: %s", err)
 	}
-	logrus.Info("Initial connection Ping succeeded")
-	return dbConn
+	if err := dbConn.Ping(); err != nil {
+		return nil, fmt.Errorf("initial database Ping failed: %s", err)
+	}
+
+	logrus.Info("Connected to the MSSQL database, and initial Ping was successful")
+	return dbConn, nil
 }
 
-func (c collector) checkConnection() bool {
+func (c collector) isConnected() bool {
 	err := c.databaseConnection.Ping()
 	if err != nil {
 		logrus.Debug("Connection Ping failed")
