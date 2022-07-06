@@ -26,31 +26,26 @@ func collectMetrics(db *sql.DB, database string, host string, enabledCollectors 
 		switch collector {
 		case "exec":
 			collectors = append(collectors, metricsCollector{collector, getExecRequestStatusStats})
-
 		case "filespace":
 			collectors = append(collectors, metricsCollector{collector, getFileSpaceUsageStats})
-
 		case "index":
 			collectors = append(collectors, metricsCollector{collector, getIndexUsageStatsStats},
 				metricsCollector{collector, getMissingIndexDetailsStats})
-
+		case "locks":
+			collectors = append(collectors, metricsCollector{collector, getSpinLockStats},
+				metricsCollector{collector, getLatchStats})
 		case "memory":
 			collectors = append(collectors, metricsCollector{collector, getMemoryCacheHashtablesStats},
 				metricsCollector{collector, getMemoryClerksStats},
 				metricsCollector{collector, getMemoryObjectsStats})
-
 		case "performance":
 			collectors = append(collectors, metricsCollector{collector, getPerformanceCountersStats})
-
 		case "schedulers":
 			collectors = append(collectors, metricsCollector{collector, getSchedulersStats})
-
 		case "tasks":
 			collectors = append(collectors, metricsCollector{collector, getTasksStats})
-
 		case "waits":
 			collectors = append(collectors, metricsCollector{collector, getWaitStatsStats})
-
 		default:
 			logrus.Error("invalid collector %s, skipping it", collector)
 		}

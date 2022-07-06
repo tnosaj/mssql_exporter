@@ -47,7 +47,7 @@ func NewCollector(dbConnectionInfo DBConnectionInfo, enabledMetrics []string) *c
 }
 
 func (c collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.up.Desc()
+	// 	ch <- c.up.Desc()
 }
 
 func (c collector) Collect(ch chan<- prometheus.Metric) {
@@ -60,10 +60,11 @@ func (c collector) Collect(ch chan<- prometheus.Metric) {
 		metrics := collectMetrics(c.databaseConnection, c.dbname, c.dbhost, c.enabledMetrics)
 		logrus.Debugf("Collected %d metrics after %s", len(metrics), time.Since(t))
 
-		for _, metric := range metrics {
+		numberOfMetrics := len(metrics)
+		for i, metric := range metrics {
 			tm := time.Now()
 			ch <- metric
-			logrus.Debugf("Added metric %s to the registry after %s", metric.Desc().String(), time.Since(tm))
+			logrus.Debugf("%d/%d Added metric %s to the registry after %s", i, numberOfMetrics, metric.Desc().String(), time.Since(tm))
 		}
 
 	}
