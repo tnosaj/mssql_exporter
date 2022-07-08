@@ -1,3 +1,3 @@
 #!/bin/sh
 
-/mssql_exporter -v true
+/mssql_exporter
