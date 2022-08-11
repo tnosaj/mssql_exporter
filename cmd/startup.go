@@ -15,7 +15,7 @@ func evaluateInputs() (internal.Settings, error) {
 	var includeMetrics string
 	flag.BoolVar(&s.Debug, "v", false, "Enable verbose debugging output")
 	flag.StringVar(&s.Port, "p", "8080", "Starts server on this port")
-	flag.StringVar(&includeMetrics, "i", "exec,filespace,index,locks,memory,schedulers,tasks,waits", "Comma seperated list of metrics to gather. Possible values are [exec,filespace,index,locks,memory,performance,schedulers,tasks,waits]")
+	flag.StringVar(&includeMetrics, "i", "exec,filespace,index,locks,memory,performance,schedulers,tasks,waits", "Comma seperated list of metrics to gather. Possible values are [exec,filespace,index,locks,memory,performance,schedulers,tasks,waits]")
 	flag.IntVar(&s.Timeout, "t", 10, "Timeout in seconds for a backend answer")
 
 	flag.StringVar(&s.MetricsPath, "u", "/metrics", "Url for the user service")
