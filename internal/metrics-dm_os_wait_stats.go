@@ -16,7 +16,7 @@ func getWaitStatsStats(conn *sql.DB) []prometheus.Metric {
 		  wait_time_ms,
 		  max_wait_time_ms,
 		  signal_wait_time_ms
-		FROM sys.dm_os_wait_stats where wait_type in ('ASYNC_NETWORK_IO','CXPACKET','DTC','NETWORKIO','OLEDB','SOS_SCHEDULER_YIELD','WRITELOG','IO_COMPLETION','IO_RETRY') 
+		FROM sys.dm_os_wait_stats where wait_type in ('ASYNC_NETWORK_IO','CXPACKET','DTC','NETWORKIO','OLEDB','SOS_SCHEDULER_YIELD','WRITELOG','IO_COMPLETION','IO_RETRY','WAIT_ON_SYNC_STATISTICS_REFRESH') 
 		OR wait_type like 'LCK_M_%' 
 		OR wait_type like 'PAGEIOLATCH_%';`,
 		conn,
