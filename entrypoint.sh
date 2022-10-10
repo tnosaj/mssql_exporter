@@ -1,3 +1,3 @@
 #!/bin/sh
 
-/mssql_exporter
+/mssql_exporter "$@"
