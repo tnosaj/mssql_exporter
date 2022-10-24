@@ -18,7 +18,7 @@ func getSettings(conn *sql.DB) []prometheus.Metric {
 		return metrics
 	}
 	var dbname string
-	var enabled int64
+	var enabled bool
 	for rows.Next() {
 
 		if err := rows.Scan(
@@ -29,12 +29,16 @@ func getSettings(conn *sql.DB) []prometheus.Metric {
 			continue
 		}
 
+		intenabled := 0
+		if enabled {
+			intenabled = 1
+		}
 		metrics = append(metrics, returnMetric(
 			"sql_settings_async_stats_update",
 			"Current value of is_auto_update_stats_async_on for the database",
 			"database",
 			dbname,
-			float64(enabled),
+			float64(intenabled),
 		))
 
 	}
