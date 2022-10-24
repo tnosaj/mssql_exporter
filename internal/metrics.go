@@ -51,6 +51,9 @@ func collectMetrics(db *sql.DB, database string, host string, enabledCollectors 
 		}
 	}
 
+	// do this regardless
+	collectors = append(collectors, metricsCollector{"settings", getSettings})
+
 	for _, collector := range collectors {
 		collectedMetrics := collector.f(db)
 		if len(collectedMetrics) == 0 {
