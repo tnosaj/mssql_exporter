@@ -21,7 +21,7 @@ type collector struct {
 
 func NewCollector(dbConnectionInfo DBConnectionInfo, enabledMetrics []string) *collector {
 
-	conn, err := connect(fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
+	conn, err := connect(fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;encrypt=true",
 		dbConnectionInfo.HostName,
 		dbConnectionInfo.User,
 		dbConnectionInfo.Password,
