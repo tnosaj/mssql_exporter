@@ -40,6 +40,8 @@ func collectMetrics(db *sql.DB, database string, host string, enabledCollectors 
 				metricsCollector{collector, getMemoryObjectsStats})
 		case "performance":
 			collectors = append(collectors, metricsCollector{collector, getPerformanceCountersStats})
+		case "replication":
+			collectors = append(collectors, metricsCollector{collector, getReplicationStats})
 		case "schedulers":
 			collectors = append(collectors, metricsCollector{collector, getSchedulersStats})
 		case "tasks":
