@@ -66,7 +66,7 @@ func collectMetrics(db *sql.DB, database string, host string, enabledCollectors 
 		metrics = append(metrics, collectedMetrics...)
 	}
 
-	logrus.Infof("Retrieved %d metrics", len(metrics))
+	logrus.Debugf("Retrieved %d metrics", len(metrics))
 	return metrics
 }
 
