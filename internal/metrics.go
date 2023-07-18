@@ -49,7 +49,7 @@ func collectMetrics(db *sql.DB, database string, host string, enabledCollectors 
 		case "waits":
 			collectors = append(collectors, metricsCollector{collector, getWaitStatsStats})
 		default:
-			logrus.Error("invalid collector %s, skipping it", collector)
+			logrus.Errorf("invalid collector %s, skipping it", collector)
 		}
 	}
 
